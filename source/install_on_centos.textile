@@ -6,6 +6,7 @@ Note: This guide installs dradis-ce v3.5
 
 endprologue.
 
+
 h3. CentOS 7 Base
 
 The following guide will install the Dradis framework and it's dependencies on CentOS 7.
