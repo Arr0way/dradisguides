@@ -1,0 +1,209 @@
+h2. Installing Dradis on CentOS 7
+
+This is a Step-by-step guide covering how to install Dradis on CentOS 7. Dradis is used for "penetration tests":https://www.aptive.co.uk/penetration-testing/ and security reporting, helping testers format and produce reports faster and includes a number of security tool (nmap, metasploit, nessus, etc) import plugins to assist with this process. 
+
+Note: This guide installs dradis-ce v3.5
+
+endprologue.
+
+h3. CentOS 7 Base
+
+The following guide will install the Dradis framework and it's dependencies on CentOS 7.
+
+A virtual machine with 2Gb of RAM assigned should be sufficient for the Dradis install. 
+
+
+A tutorial on how to install the base OS falls out of the scope of this guide, but a default minimal installation of CentOS 7 using the minimal ISO, is all that's required. 
+
+
+h3. Installing the Dependencies 
+
+In order to install Dradis on CentOS there are a few packages that we will need, run the following commands using sudo or the superuser account for your VM: 
+
+Install the EPEL repository: 
+
+<shell>
+yum install epel-release -y 
+</shell>
+
+Install dependencies from YUM:
+
+<code>
+sudo yum install -y git-core zlib zlib-devel gcc-c++ patch readline readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 autoconf automake libtool bison curl sqlite-devel mariadb-server mariadb-devel
+</code> 
+
+Install redis: 
+
+<shell>
+yum install redis
+</shell> 
+
+Start redis: 
+
+<shell>
+service redis start
+</shell>
+
+Verify redis is running: 
+
+<shell>
+redis-cli ping
+</shell>
+
+You should see the response PONG. 
+
+h3. Configure the Firewall for Dradis
+
+Assuming you want to access your instance of Dradis from other machines on the network you will need to configure the Firewall to allow connections on the default port TCP:3000
+
+<shell>
+firewall-cmd --zone=public --add-port=3000/tcp --permanent
+firewall-cmd --reload
+</shell>
+
+h3. Create the Dradis User 
+
+Only use the root account when necessary, create a user to run your Dradis server: 
+
+<shell>
+useradd dradis
+</shell>
+
+Use the dradis user account: 
+<shell>
+su - dradis  
+</shell> 
+
+
+h3. Installing RBENV on CentOS 7 
+
+<shell> 
+cd
+git clone git://github.com/sstephenson/rbenv.git .rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+exec $SHELL
+</shell> 
+
+<shell>
+git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
+echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bash_profile
+exec $SHELL
+</shell> 
+
+Logout of the user and back in again to insure the environment variables have updated: 
+
+<shell> 
+exit
+su - dradis
+</shell> 
+
+
+h3. Installing Ruby 2.2.2
+
+<shell>
+rbenv install -v 2.2.2
+rbenv global 2.2.2 
+</shell>
+
+Check the right version of ruby is installed: 
+
+<shell>
+ruby -v
+</shell> 
+
+If you don't want / need Ruby docs (slows down build process) you can disable it using: 
+<shell>
+echo "gem: --no-document" > ~/.gemrc
+</shell> 
+
+Install bundler: 
+
+<shell>
+gem install bundler
+</shell>
+
+h3. Install Rails 
+
+Install Rails: 
+
+<shell>
+gem install rails 
+</shell> 
+
+<shell>
+rbenv rehash
+</shell> 
+
+Check rails version:
+
+<shell>
+rails -v
+</shell> 
+
+h3. Clone Dradis GitHub 
+
+Make a directory called dradis in your home dir (or the location you which dradis to reside). Be mindful of the fact that when you build Dradis it will create directories outside of it's root, in the dir above.
+
+<shell>
+mkdir -p /home/dradis/dradis/
+cd /home/dradis/dradis/
+</shell>
+
+Git clone Dradis:
+
+<shell>
+git clone https://github.com/dradis/dradis-ce.git
+</shell>
+
+<shell>
+cd dradis-ce/
+bundle install
+</shell> 
+
+Run setup: 
+
+<shell>
+./bin/setup 
+</shell>
+
+If after setup you get the following error: 
+
+<shell>
+Unpacking objects: 100% (85/85), done.
+== Installing dependencies ==
+The Gemfile's dependencies are satisfied
+ 
+== Copying sample files ==
+ 
+== Preparing database ==
+Could not find gem 'dradis-calculator_cvss (~> 3.0)' in any of the gem sources listed in your Gemfile.
+Run `bundle install` to install missing gems.
+ 
+== Command ["bin/rails db:setup"] failed ==
+</shell> 
+
+Re-run: 
+
+<shell>
+bundle install 
+</shell>
+
+Migrate db, if you don't do this you will get a stack trace in the browser: 
+
+<shell>
+bundle exec rake db:migrate
+</shell> 
+
+
+And finally run Dradis: 
+
+<shell>
+bundle exec rails server -b YOUR-INTERFACE-IP
+</shell>
+
+If you only want to access Dradis locally you can run with out the -b switch. 
+
+h3. Setting up Dradis in the Browser 
+
+Open the following URL in a browser and run through the setup: http://YOUR-IP:3000/setup 
